@@ -1,3 +1,10 @@
+import {
+  budgetAllocationChartData,
+  forecastChartData,
+  marketingFunnelChartData,
+  revenueOverviewChartData,
+} from "@/lib/analytics-chart-data";
+
 /**
  * Types aligned with the future FastAPI `/api/v1/analysis` response.
  * Replace `mockAnalysisResponse` with the API payload when integrating.
@@ -199,21 +206,8 @@ export const mockAnalysisResponse: AnalysisApiResponse = {
     optimizationScore: 91,
     businessHealthScore: 92,
   },
-  revenueOverview: [
-    { month: "Jan", actual: 38200, predicted: 39400, forecast: 40100 },
-    { month: "Feb", actual: 42100, predicted: 43200, forecast: 44800 },
-    { month: "Mar", actual: 39800, predicted: 41100, forecast: 42500 },
-    { month: "Apr", actual: 44500, predicted: 45800, forecast: 47200 },
-    { month: "May", actual: 47200, predicted: 48600, forecast: 50100 },
-    { month: "Jun", actual: 45600, predicted: 47100, forecast: 48800 },
-    { month: "Jul", actual: 41000, predicted: 42600, forecast: 44200 },
-  ],
-  funnel: [
-    { stage: "Impressions", value: 4280000, label: "4.28M" },
-    { stage: "Clicks", value: 153240, label: "153.2K" },
-    { stage: "Conversions", value: 12842, label: "12,842" },
-    { stage: "Revenue", value: 298400, label: "$298.4K" },
-  ],
+  revenueOverview: revenueOverviewChartData,
+  funnel: marketingFunnelChartData,
   predictionSummary: {
     rowsProcessed: 19272,
     predictionsGenerated: 19272,
@@ -293,27 +287,17 @@ export const mockAnalysisResponse: AnalysisApiResponse = {
     recommendedBudget: 52400,
     revenueIncrease: 18500,
     savings: 6200,
-    allocation: [
-      { channel: "Search", currentBudget: 18400, optimizedBudget: 21200 },
-      { channel: "Shopping", currentBudget: 7400, optimizedBudget: 9800 },
-      { channel: "Meta", currentBudget: 12800, optimizedBudget: 11600 },
-      { channel: "Display", currentBudget: 11600, optimizedBudget: 6800 },
-      { channel: "YouTube", currentBudget: 6600, optimizedBudget: 3000 },
-    ],
+    allocation: budgetAllocationChartData.map((item) => ({
+      channel: item.channel,
+      currentBudget: item.current,
+      optimizedBudget: item.optimized,
+    })),
   },
   forecast: {
     expectedRevenue: 338200,
     expectedGrowth: 14.8,
     confidence: 94,
-    dailyForecast: Array.from({ length: 30 }, (_, i) => {
-      const base = 9800 + i * 120 + Math.sin(i / 3) * 400;
-      return {
-        day: `Day ${i + 1}`,
-        revenue: Math.round(base),
-        lower: Math.round(base * 0.92),
-        upper: Math.round(base * 1.08),
-      };
-    }),
+    dailyForecast: forecastChartData,
   },
   scenarios: [
     {
