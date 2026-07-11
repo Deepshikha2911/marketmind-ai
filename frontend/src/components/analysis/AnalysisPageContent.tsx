@@ -75,9 +75,9 @@ export function AnalysisPageContent() {
       <motion.section
         {...sectionMotion}
         transition={{ ...sectionMotion.transition, delay: 0.1 }}
-        className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-3 xl:gap-8"
+        className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1.5fr_1fr] xl:gap-8"
       >
-        <div className="xl:col-span-2">
+        <div className="min-w-0">
           <RevenueOverviewChart data={data.revenueOverview} />
         </div>
         <MarketingFunnel stages={data.funnel} />
