@@ -6,6 +6,7 @@ from backend.app.api.endpoints.budget import router as budget_router
 from backend.app.api.endpoints.forecast import router as forecast_router
 from backend.app.api.endpoints.scenario import router as scenario_router
 from backend.app.api.endpoints.analyze import router as analyze_router
+from backend.app.api.endpoints.upload import router as upload_router
 
 api_router = APIRouter()
 
@@ -52,4 +53,9 @@ api_router.include_router(
 api_router.include_router(
     analyze_router,
     tags=["Complete Analysis"]
+)
+
+api_router.include_router(
+    upload_router,
+    tags=["Upload"]
 )
