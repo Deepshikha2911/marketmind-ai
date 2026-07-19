@@ -141,7 +141,7 @@ export function RevenueDistributionChart({ data }: RevenueDistributionChartProps
             paddingAngle={3}
           >
             {data.map((entry, index) => (
-              <Cell key={entry.range} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+              <Cell key={`${entry.range}-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
             ))}
           </Pie>
           <Tooltip

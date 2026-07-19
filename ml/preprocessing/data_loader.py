@@ -79,6 +79,14 @@ class UniversalDatasetLoader:
             "budget",
             "budget_amount",
             "campaign_budget_amount"
+        ],
+
+        "channel": [
+            "channel",
+            "source",
+            "medium",
+            "network",
+            "platform"
         ]
 
     }
@@ -92,7 +100,8 @@ class UniversalDatasetLoader:
         "clicks",
         "impressions",
         "conversions",
-        "daily_budget"
+        "daily_budget",
+        "channel"
     ]
 
     def __init__(self):
@@ -151,6 +160,9 @@ class UniversalDatasetLoader:
 
                 elif col == "date":
                     df[col] = pd.NaT
+
+                elif col == "channel":
+                    df[col] = "Unknown"
 
                 else:
                     df[col] = 0

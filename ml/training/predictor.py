@@ -65,6 +65,8 @@ class MarketingPredictor:
         self.scaler = None
         self.feature_columns = []
         self.target_column = None
+        self.train_rows = 0
+        self.test_rows = 0
 
     # --------------------------------------------------
     # Feature Detection
@@ -129,6 +131,14 @@ class MarketingPredictor:
             shuffle=False
         )
 
+        # record train/test sizes for reporting
+        try:
+            self.train_rows = int(X_train.shape[0])
+            self.test_rows = int(X_test.shape[0])
+        except Exception:
+            self.train_rows = 0
+            self.test_rows = 0
+
         self.scaler = StandardScaler()
 
         X_train = self.scaler.fit_transform(X_train)
@@ -192,6 +202,12 @@ class MarketingPredictor:
                     y_test,
                     predictions,
                 )
+            ),
+            # MAPE: handle zeros in y_test gracefully
+            "MAPE": float(
+                np.mean(
+                    np.abs((np.array(y_test, dtype=float) - np.array(predictions, dtype=float)) / np.where(np.array(y_test, dtype=float) == 0, np.nan, np.array(y_test, dtype=float)))
+                ) * 100.0
             ),
         }
 

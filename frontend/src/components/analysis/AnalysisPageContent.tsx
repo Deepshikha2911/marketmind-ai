@@ -17,23 +17,49 @@ import { MarketingFunnel } from "@/components/analysis/MarketingFunnel";
 import { OverallScoreCard } from "@/components/analysis/OverallScoreCard";
 import { RevenueOverviewChart } from "@/components/analysis/RevenueOverviewChart";
 import { ScenarioComparisonCards } from "@/components/analysis/ScenarioComparisonCards";
-import { mockAnalysisResponse } from "@/lib/analysis-data";
+import type { AnalysisApiResponse } from "@/lib/analysis-data";
 
-/**
- * Replace `mockAnalysisResponse` with:
- *   const data = await fetch('/api/v1/analysis').then(r => r.json())
- * when connecting to FastAPI.
- */
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
+
 export function AnalysisPageContent() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const data = mockAnalysisResponse;
+  const [data, setData] = useState<AnalysisApiResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 400);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    async function loadAnalysis() {
+      try {
+        const response = await fetch(`${backendUrl}/api/v1/analysis`);
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.detail || payload.message || "Unable to load analysis data.");
+        }
+
+        if (isMounted) {
+          setData(payload.data ?? payload);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Unable to load analysis data.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadAnalysis();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="space-y-8 lg:space-y-10">
         <div className="h-64 animate-pulse rounded-2xl bg-white/[0.04]" />
@@ -43,6 +69,15 @@ export function AnalysisPageContent() {
           ))}
         </div>
         <div className="h-96 animate-pulse rounded-2xl bg-white/[0.04]" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-8 text-white">
+        <h2 className="text-xl font-semibold">Analysis unavailable</h2>
+        <p className="mt-3 text-sm text-rose-100">{error ?? "No analysis data returned from the backend."}</p>
       </div>
     );
   }

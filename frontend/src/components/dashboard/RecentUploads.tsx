@@ -46,7 +46,7 @@ export function RecentUploads({ uploads }: RecentUploadsProps) {
             </thead>
             <tbody>
               {uploads.map((upload) => {
-                const config = statusConfig[upload.status];
+                const config = statusConfig[upload.status] ?? statusConfig.Processed;
                 const StatusIcon = config.icon;
 
                 return (

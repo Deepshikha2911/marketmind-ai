@@ -8,6 +8,7 @@ import pandas as pd
 from fastapi import HTTPException, UploadFile
 
 from backend.app.schemas.upload import UploadHistoryItem
+from backend.app.services.insight_service import InsightService
 
 
 UPLOAD_DIR = Path("uploads")
@@ -99,6 +100,46 @@ class UploadService:
         except Exception as exc:
             stored_path.unlink(missing_ok=True)
             raise HTTPException(status_code=400, detail=f"Unable to parse CSV file: {exc}")
+
+        # Persist a processed copy (pickle) for faster reuse by backend services
+        try:
+            processed_path = UPLOAD_DIR / f"{stored_filename}.pkl"
+            df.to_pickle(processed_path)
+        except Exception:
+            # non-fatal: continue without processed cache
+            processed_path = None
+
+        # Compute simple aggregates and persist metadata for dashboard reuse
+        revenue_cols = [c for c in ["conversion_value", "revenue", "revenue_value", "value"] if c in df.columns]
+        spend_cols = [c for c in ["cost", "spend", "ad_spend", "amount"] if c in df.columns]
+        conv_cols = [c for c in ["conversions", "conversion", "orders"] if c in df.columns]
+
+        total_revenue = float(df[revenue_cols[0]].sum()) if revenue_cols else (float(df[conv_cols[0]].sum()) if conv_cols else 0.0)
+        total_spend = float(df[spend_cols[0]].sum()) if spend_cols else 0.0
+        total_conversions = int(df[conv_cols[0]].sum()) if conv_cols else 0
+
+        metadata = {
+            "summary": {
+                "totalRevenue": total_revenue,
+                "totalSpend": total_spend,
+                "conversions": total_conversions,
+            }
+        }
+
+        # Generate and persist insights at upload time so Dashboard can reuse them
+        try:
+            insight_service = InsightService()
+            insights_payload = insight_service.generate(str(stored_path))
+            metadata["insights"] = insights_payload.get("insights", []) if isinstance(insights_payload, dict) else []
+        except Exception:
+            metadata["insights"] = []
+
+        try:
+            meta_file = UPLOAD_DIR / f"{stored_filename}.meta.json"
+            with meta_file.open("w", encoding="utf-8") as mh:
+                json.dump(metadata, mh, indent=2)
+        except Exception:
+            pass
 
         upload_timestamp = datetime.utcnow().isoformat() + "Z"
         upload_date = datetime.utcnow().strftime("%b %d, %Y")

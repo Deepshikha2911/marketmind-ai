@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BudgetAllocationChart } from "@/components/budget/BudgetAllocationChart";
 import { BudgetBottomSummaryCard } from "@/components/budget/BudgetBottomSummaryCard";
 import { BudgetDownloadSection } from "@/components/budget/BudgetDownloadSection";
@@ -8,15 +9,53 @@ import { BudgetSummaryCards } from "@/components/budget/BudgetSummaryCards";
 import { CampaignRecommendationTable } from "@/components/budget/CampaignRecommendationTable";
 import { OptimizationInsights } from "@/components/budget/OptimizationInsights";
 import { ROIComparisonChart } from "@/components/budget/ROIComparisonChart";
-import { mockBudgetResponse } from "@/lib/budget-data";
+import { EMPTY_BUDGET_RESPONSE, type BudgetApiResponse } from "@/lib/budget-data";
 
-/**
- * Replace `mockBudgetResponse` with:
- *   const data = await fetch('/api/v1/budget/optimize').then(r => r.json())
- * when connecting to FastAPI.
- */
 export function BudgetPageContent() {
-  const data = mockBudgetResponse;
+  const [data, setData] = useState<BudgetApiResponse>(EMPTY_BUDGET_RESPONSE);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadBudgetData() {
+      try {
+        const response = await fetch("http://localhost:8000/api/v1/optimize-budget", {
+          method: "POST",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load budget analysis");
+        }
+
+        const payload = await response.json();
+        if (!ignore) {
+          setData(payload);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setData(EMPTY_BUDGET_RESPONSE);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadBudgetData();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  if (loading) {
+    return <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-sm text-slate-400">Loading budget recommendations…</div>;
+  }
+
+  if (!data.recommendations.length && !data.campaigns.length) {
+    return <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-sm text-slate-400">Upload a CSV dataset to generate fresh budget recommendations.</div>;
+  }
 
   return (
     <div className="space-y-8 lg:space-y-10">

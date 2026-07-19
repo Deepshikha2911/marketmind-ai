@@ -1,39 +1,29 @@
-import shutil
-from pathlib import Path
+﻿from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException
 
 from backend.app.schemas.analyze import AnalyzeResponse
 from backend.app.services.analyze_service import AnalyzeService
+from backend.app.services.upload_service import UploadService
 
 router = APIRouter()
 
 service = AnalyzeService()
+upload_service = UploadService()
 
 
-@router.post(
-    "/analyze",
-    response_model=AnalyzeResponse
+@router.get(
+    "/analysis",
+    response_model=AnalyzeResponse,
 )
-async def analyze(
-    file: UploadFile = File(...)
-):
+def get_analysis():
+    current = upload_service.get_current()
+    if current is None:
+        raise HTTPException(status_code=404, detail="No dataset has been uploaded yet.")
 
-    # Validate file type
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail="Only CSV files are supported."
-        )
-
-    upload_dir = Path("uploads")
-    upload_dir.mkdir(exist_ok=True)
-
-    file_path = upload_dir / file.filename
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    file_path = Path("uploads") / current.storedFilename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Uploaded dataset not found.")
 
     result = service.analyze(str(file_path))
-
     return AnalyzeResponse(**result)

@@ -44,7 +44,7 @@ export function CampaignLeaderboardTable({ campaigns }: CampaignLeaderboardTable
           </thead>
           <tbody>
             {campaigns.map((row, index) => {
-              const config = statusConfig[row.status];
+              const config = statusConfig[row.status] ?? statusConfig.Stable;
               const StatusIcon = config.icon;
 
               return (
